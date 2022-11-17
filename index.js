@@ -20,11 +20,12 @@ async function run() {
     try {
         const appointmentOptionCollection = client.db('doctorsPortal').collection('appointmentOptions')
         const bookingsCollection = client.db('doctorsPortal').collection('bookings');
+        const usersCollection = client.db('doctorsPortal').collection('users');
 
         // use Aggregate to query multiple collection and then merge data
         app.get('/appointmentOptions', async (req, res) => {
             const date = req.query.date;
-            console.log(date);
+            // console.log(date);
             const quiry = {};
             const options = await appointmentOptionCollection.find(quiry).toArray();
 
@@ -51,13 +52,24 @@ async function run() {
       * app.patch('/bookings/:id')
       * app.delete('/bookings/:id')
      */
+        // get booking data to dashboard
 
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            // console.log(email);
+            const query = { email: email };
+            const bookings = await bookingsCollection.find(query).toArray();
+            res.send(bookings)
+        })
+
+
+        // post booking data 
         app.post('/bookings', async (req, res) => {
             const booking = req.body
             console.log(booking);
             const query = {
                 appointmentDate: booking.appointmentDate,
-                email:booking.email,
+                email: booking.email,
                 treatment: booking.treatment
             }
 
@@ -65,11 +77,20 @@ async function run() {
 
             if (alreadyBooking.length) {
                 const message = `you already have a booking on ${booking.appointmentDate}`
-                return res.send({acknowledged: false, message})
+                return res.send({ acknowledged: false, message })
             }
 
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
+        });
+
+        // post users data
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+
         })
 
     }
